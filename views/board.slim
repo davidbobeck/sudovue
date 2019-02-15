@@ -1,0 +1,57 @@
+/ - content_for :styles do
+/   css:
+
+- content_for :styles do
+  link rel="stylesheet" href="assets/board.css" type="text/css"
+
+- content_for :scripts do
+  script src="assets/board.js"
+/   / = javascript_include_tag "https://code.jquery.com/jquery-3.3.1.min.js", {integrity: "sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=", crossorigin: "anonymous"}
+/   / = javascript_include_tag "https://code.jquery.com/jquery-3.3.1.min.js"
+/   javascript:
+
+div#vue-root.dashboard
+  div.panel.board-panel
+    div.container.board
+      - (1..9).to_a.each do |f|
+        - ((10*f+1)..(10*f+9)).to_a.each do |id| 
+          div.cell.board id="#{id}"
+
+        / - (11..19).to_a.each do |id| 
+        /   div.cell.board id="#{id}"
+        / - (21..29).to_a.each do |id| 
+        /   div.cell.board id="#{id}"
+        / - (31..39).to_a.each do |id| 
+        /   div.cell.board id="#{id}"
+        / - (41..49).to_a.each do |id| 
+        /   div.cell.board id="#{id}"
+        / - (51..59).to_a.each do |id| 
+        /   div.cell.board id="#{id}"
+        / - (61..69).to_a.each do |id| 
+        /   div.cell.board id="#{id}"
+        / - (71..79).to_a.each do |id| 
+        /   div.cell.board id="#{id}"
+        / - (81..89).to_a.each do |id| 
+        /   div.cell.board id="#{id}"
+        / - (91..99).to_a.each do |id| 
+        /   div.cell.board id="#{id}"
+        
+  div.panel.picker-panel  
+    div.container.picker
+      div.cell.brush.b0 id="0"
+      - (1..9).to_a.each do |id|
+          div.cell.brush id="#{id}" class="b#{id}" = "#{id}"
+
+      / div#0"class="cell brush b0"></div>
+      / div#1"class="cell brush b1">1</div>
+      / div#2"class="cell brush b2">2</div>
+      / div#3"class="cell brush b3">3</div>
+      / div#4"class="cell brush b4">4</div>
+      / div#5"class="cell brush b5">5</div>
+      / div#6"class="cell brush b6">6</div>
+      / div#7"class="cell brush b7">7</div>
+      / div#8"class="cell brush b8">8</div>
+      / div#9"class="cell brush b9">9</div>
+
+    div.button.clear-button = "Clear All" 
+    div.button.run-button = "Run"

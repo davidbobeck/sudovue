@@ -1,0 +1,34 @@
+
+- content_for :styles do
+  link rel="stylesheet" href="assets/board.css" type="text/css"
+
+- content_for :scripts do
+  script src="https://cdn.jsdelivr.net/npm/vue"
+  script src="assets/vue-board.js"
+
+div#vue-root.dashboard
+  div.container.board
+    div.cell.board v-for="cell in cells" v-bind:id="cell.id" v-text="labelFromNumber(cell.color)" v-bind:style="{ backgroundColor: colorFromNumber(cell.color) }" v-on:click="onClickCell(cell)"
+        
+  div.container.zones
+    div.zone.zone1
+    div.zone.zone2
+    div.zone.zone3
+    div.zone.zone4
+    div.zone.zone5
+    div.zone.zone6
+    div.zone.zone7
+    div.zone.zone8
+    div.zone.zone9
+        
+  div.panel
+    div.container.picker
+      div.cell.brush.b0 id="0"  v-on:click="onClickBrush(0)"
+      - (1..9).to_a.each do |id|
+          div.cell.brush id="#{id}" class="b#{id}" v-on:click="onClickBrush(#{id})" = "#{id}"
+
+    div.button.clear-button v-on:click="onClickClear" = "Clear All" 
+    div.button.run-button v-on:click="onClickSolve" = "Solve"
+
+  / div.panel.board-panel
+  / div.panel.picker-panel  
