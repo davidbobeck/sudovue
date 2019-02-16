@@ -66,12 +66,10 @@ class SudokuSolver
     end
   end
 
-  # #---------------------------------
-  # def load_cells(sudoku_cells)
-  #   sudoku_cells.each do |cell|
-  #     self.cells[cell.id] = cell
-  #   end
-  # end
+  #---------------------------------
+  def to_vue
+    self.cells.map { |id, sc| sc.to_vue }
+  end
 
   #---------------------------------
   def import_puzzle(puzzle = {})
@@ -100,34 +98,39 @@ class SudokuSolver
       run_loop = false
       loop_count += 1
       puts "loop count = #{loop_count}"
-
+      
+      # fuse breaker
+      break if loop_count > 100
+      
       cells.each_key do |id|
         cell = cells[id]
         next unless cell.color.nil? 
         
         #####################
-        #  LOGIC #1
+        #  RULE #1
         #####################
 
-        # loop thru all colors
-        self.colors.each do |color_to_test|
-          knowing_8_of_9(cell, self.h[cell.h], color_to_test)
-          knowing_8_of_9(cell, self.v[cell.v], color_to_test)
-          knowing_8_of_9(cell, self.b[cell.b], color_to_test)
-        end
-
-        run_loop |= cell.promote_remaining_color
+        run_loop |= rule_of_knowing_8_of_9(cell, self.h[cell.h])
+        run_loop |= rule_of_knowing_8_of_9(cell, self.v[cell.v])
+        run_loop |= rule_of_knowing_8_of_9(cell, self.b[cell.b])
 
         #####################
-        #  LOGIC #2
+        #  RULE #2
         #####################
 
         # process "can't go there, so must go here" cases
-        run_loop |= knowing_where_it_cant_go(cell, self.h[cell.h])
-        run_loop |= knowing_where_it_cant_go(cell, self.v[cell.v])
-        run_loop |= knowing_where_it_cant_go(cell, self.b[cell.b])
+        run_loop |= rule_of_knowing_where_it_cant_go(cell, self.h[cell.h])
+        run_loop |= rule_of_knowing_where_it_cant_go(cell, self.v[cell.v])
+        run_loop |= rule_of_knowing_where_it_cant_go(cell, self.b[cell.b])
+        
+        #####################
+        #  RULE #3
+        #####################
+        run_loop |= rule_of_binary_colors(cell, self.h[cell.h])
+        run_loop |= rule_of_binary_colors(cell, self.v[cell.v])
+        run_loop |= rule_of_binary_colors(cell, self.b[cell.b])
       end
-
+      
       run_loop = false if success?
       dump_results if with_dump
     end
@@ -136,27 +139,38 @@ class SudokuSolver
   end
 
   #---------------------------------
-  def knowing_8_of_9(cell, zone_ids, color_to_test)
-    zone_ids.each do |id_to_test|
-      next if id_to_test == cell.id
-      target = self.cells[id_to_test]
-      if target.color == color_to_test
-        cell.reject_color(target.color)
+  def rule_of_knowing_8_of_9(cell, zone_ids)
+    zone_ids -= [cell.id]
+    loop_again = false
+
+    # loop thru all colors
+    self.colors.each do |color_to_test|
+      zone_ids.each do |id_to_test|
+        target = self.cells[id_to_test]
+        if target.color == color_to_test
+          # #debugging code
+          # if cell.id == 54
+          #   puts "RULE1: romove #{target.color} from #{cell.possible_colors}"
+          # end
+
+          loop_again |= cell.reject_color(target.color)
+        end
       end
     end
+
+    # if eight of the colors have already been used,
+    # then it must be the nineth
+    run_loop |= cell.promote_remaining_color
+
+    loop_again
   end
 
   #---------------------------------
-  def knowing_where_it_cant_go(cell, zone_ids)
+  def rule_of_knowing_where_it_cant_go(cell, zone_ids)
     zone_ids -= [cell.id]
     # puts "zone_ids = #{zone_ids}" if cell.id == 76
 
-    zone_possible_colors = zone_ids.each_with_object([]) do |target_id, remaining_colors|
-      # puts "target_id = #{target_id}, possible_colors = #{self.cells[target_id].possible_colors}" if cell.id == 76
-      remaining_colors << self.cells[target_id].possible_colors
-      # remaining_colors
-    end.flatten.uniq
-    # puts "zone_possible_colors = #{zone_possible_colors}" if cell.id == 76
+    zone_possible_colors = get_zone_possible_colors(zone_ids)
 
     # now test our results
     xor = (zone_possible_colors + cell.possible_colors) - (zone_possible_colors & cell.possible_colors)
@@ -168,6 +182,58 @@ class SudokuSolver
     end
 
     false
+  end
+
+  #---------------------------------
+  # If two colors only exist in the same two cells, then all
+  # other possible colors can be cleared from those two cells.
+  def rule_of_binary_colors(cell, zone_ids)
+    zone_ids -= [cell.id]
+    loop_again = false
+    
+    zone_ids.each do |buddy_id|
+      buddy = self.cells[buddy_id]
+      binary_colors = cell.possible_colors & buddy.possible_colors
+
+      if binary_colors.count == 2
+        # determine if these colors are unique to the zone
+        remainder_zone_ids = zone_ids - [buddy_id]
+        remainder_possible_colors = get_zone_possible_colors(remainder_zone_ids)
+        if (binary_colors & remainder_possible_colors).count == 0
+
+          # the binary colors are unique?
+          if cell.possible_colors != binary_colors || buddy.possible_colors != binary_colors
+            # #debugging code
+            # if cell.id == 54
+            #   puts "RULE3: changing #{cell.possible_colors} to #{binary_colors}"
+            # end
+
+            cell.possible_colors = binary_colors
+
+            # #debugging code
+            # if buddy.id == 54
+            #   puts "RULE3: changing #{buddy.possible_colors} to #{binary_colors}"
+            # end
+
+            buddy.possible_colors = binary_colors
+            loop_again = true
+          end
+        end
+      end
+    end
+    
+    loop_again
+  end
+  
+  #---------------------------------
+  def get_zone_possible_colors(zone_ids)
+    zone_possible_colors = zone_ids.each_with_object([]) do |target_id, remaining_colors|
+      # puts "target_id = #{target_id}, possible_colors = #{self.cells[target_id].possible_colors}" if cell.id == 76
+      remaining_colors << self.cells[target_id].possible_colors
+      # remaining_colors
+    end.flatten.uniq
+    # puts "zone_possible_colors = #{zone_possible_colors}" if cell.id == 76
+    zone_possible_colors
   end
 
   #---------------------------------

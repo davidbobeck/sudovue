@@ -14,14 +14,12 @@ const vue = new Vue ({
     el: '#vue-root',
     data: {
         cells: [],
-        brush_color: 0
+        brush_color: 0,
+        hovering: false,
+        hovering_text: 'dude'
     },
     mounted() {
-      // const info = $("#info-bucket");
-      // const albumId = info.attr('data-album-id');
-      // const albumType = info.attr('data-album-type');
       this.getCells();
-      // this.monitorAlbumPhotoPopovers();
     },
     updated() {
     },
@@ -77,6 +75,18 @@ const vue = new Vue ({
         onClickSolve: function() {
             // alert(JSON.stringify(vue.cells));
             vue.solveCells();
+        },
+        onClickReset: function() {
+            // alert(JSON.stringify(vue.cells));
+            vue.getCells();
+        },
+        onMouseEnter: function(cell) {
+            vue.hovering = true;
+            vue.hovering_text = cell.id.toString() + ': ' + cell.suspects;
+        },
+        onMouseLeave: function(cell) {
+            vue.hovering = false;
+            // vue.hovering_text = ''
         },
         colorFromNumber: function(num) {
             switch (num) {

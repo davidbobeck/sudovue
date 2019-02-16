@@ -1,5 +1,6 @@
 class SudokuCell
-  attr_accessor :id, :h, :v, :b, :color, :possible_colors
+  attr_accessor :color, :possible_colors
+  attr_reader :id, :h, :v, :b
 
   #---------------------------------
   def initialize(id, color = nil)
@@ -20,7 +21,11 @@ class SudokuCell
 
   #---------------------------------
   def reject_color(color)
-    self.possible_colors -= [color]
+    if self.possible_colors.include?(color) 
+      self.possible_colors -= [color]
+      return true
+    end
+    false
   end
 
   #---------------------------------
@@ -40,6 +45,11 @@ class SudokuCell
     self.color = color
     self.possible_colors = [color] unless color.nil?
     true
+  end
+  
+  #---------------------------------
+  def to_vue
+    { 'id' => self.id, 'color' => self.color || 0, 'suspects' => self.possible_colors }
   end
 end
 

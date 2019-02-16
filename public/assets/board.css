@@ -65,6 +65,8 @@
 .cell.b8 { background-color: pink }
 .cell.b9 { background-color: RebeccaPurple }
 
+.cell.brush.selected { border: 3px solid gold }
+
 .button { 
   margin: 10px auto;
   padding: 10px; 
@@ -75,6 +77,13 @@
   font-size: 100%;
   font-weight: bold;
   font-family: arial;
+}
+.feedback {
+  margin: 10px auto;
+  text-align: center;
+  font-family: arial;
+  font-size: 20px;
+  font-weight: 400;
 }
 .container.zones {
   margin: 10px auto;

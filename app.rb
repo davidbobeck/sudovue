@@ -7,6 +7,10 @@ require 'pry'
 require_relative 'sudoku_solver'
 configure { set :server, :puma }
 
+load 'colors.rb'
+# load 'puzzles/puzzle_90.rb'
+load 'puzzles/puzzle_101.rb'
+
 #---------------------------------
 get '/' do
   "Hello David"
@@ -14,19 +18,32 @@ end
 
 #---------------------------------
 get '/board' do
-  slim :'vue-board', layout: :plain
+  slim :'vue-board'
 end
 
 #---------------------------------
 get '/cells' do 
   content_type :json
 
+  # initialize with empty board
+  # cells = []
+  # (1..9).to_a.each do |row|
+  #   (1..9).to_a.each do |col|
+  #     suspects = color == 0 ? [1,2,3,4,5,6,7,8,9] : [color]
+  #     cells << { 'id' => row*10+col, 'color' => color, 'suspects' => suspects }
+  #   end
+  # end
+
+  # initialize board with puzzle
   cells = []
   (1..9).to_a.each do |row|
     (1..9).to_a.each do |col|
-      cells << { 'id' => row*10+col, 'color' => 0 }
+      color = PUZZLE.fetch(row*10+col, 0)
+      suspects = color == 0 ? [1,2,3,4,5,6,7,8,9] : [color]
+      cells << { 'id' => row*10+col, 'color' => color, 'suspects' => suspects }
     end
   end
+  
   cells.to_json
 end
 
@@ -50,7 +67,7 @@ post '/solve' do
   
     # sudoku.dump_results
     puts "SUCCESS" if sudoku.success?
-    vue_cells = sudoku.cells.map { |id, sc| { 'id' => id, 'color' => sc.color || 0 } }
+    vue_cells = sudoku.to_vue
   end
   
   vue_cells.to_json
