@@ -8,8 +8,9 @@
 
 div#vue-root.dashboard
   div.container.board
-    div.cell.board v-for="cell in cells" v-bind:id="cell.id" v-text="labelFromNumber(cell.color)" v-bind:style="{ backgroundColor: colorFromNumber(cell.color) }" v-on:click="onClickCell(cell)" v-on:mouseenter="onMouseEnter(cell)" v-on:mouseleave="onMouseLeave(cell)"
-        
+    div.cell.board v-for="cell in cells" v-bind:class="{ball: displayAsBall(cell)}" v-bind:id="cell.id" v-bind:style="{ backgroundColor: colorFromNumber(cell.color) }" v-on:click="onClickCell(cell)" v-on:mouseenter="onMouseEnter(cell)" v-on:mouseleave="onMouseLeave(cell)"
+      span v-if="displayDigits" v-text="labelFromNumber(cell.color)"
+
   div.container.zones
     div.zone.zone1
     div.zone.zone2
@@ -23,14 +24,22 @@ div#vue-root.dashboard
         
   div.panel
     div.container.picker
-      div.cell.brush.b0 id="0"  v-on:click="onClickBrush(0)" v-bind:class="{selected: brush_color === 0}"
+      div.cell.brush id="0" v-on:click="onClickBrush(0)" v-bind:class="{selected: brush_color === 0}" v-bind:style="{ backgroundColor: colorFromNumber(0) }"
       - (1..9).to_a.each do |id|
-          div.cell.brush id="#{id}" class="b#{id}" v-on:click="onClickBrush(#{id})" v-bind:class="{selected: brush_color === #{id}}"
-            = "#{id}"
+          div.cell.brush.ball id="#{id}" v-on:click="onClickBrush(#{id})" v-bind:class="{selected: brush_color === #{id}}" v-bind:style="{ backgroundColor: colorFromNumber(#{id}) }"
+            span v-if="displayDigits" = "#{id}"
 
     div.button.clear-button v-on:click="onClickClear" = "Clear All" 
     div.button.solve-button v-on:click="onClickSolve" = "Solve"
     div.button.reset-button v-on:click="onClickReset" = "Reset"
+    div.button.export-button v-on:click="onClickExport" = "Export"
+
+    div.display-config
+      select v-model="displayMode"
+        option value="digits" = "Show Digits Only"
+        option value="colors" = "Show Colors Only"
+        option value="both" = "Show Digits and Colors"
+
     div.feedback v-if="hovering" v-text="hovering_text"
 
   / div.panel.board-panel

@@ -16,7 +16,8 @@ const vue = new Vue ({
         cells: [],
         brush_color: 0,
         hovering: false,
-        hovering_text: 'dude'
+        hovering_text: 'dude',
+        displayMode: 'colors'
     },
     mounted() {
       this.getCells();
@@ -36,6 +37,27 @@ const vue = new Vue ({
                 },
                 error: function (result) {
                     alert('error getting the cell data');
+                }
+            });
+        },
+        exportCells: function() {
+            let data = {cells: vue.cells};
+            $.ajax({
+                url: '/export',
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                dataType: 'json',
+                success: function (result) {
+                    //alert(JSON.stringify(result));
+                    let jsonBlob = new Blob([JSON.stringify(result)], { type: 'application/json;charset=utf-8' });
+                    let link = window.URL.createObjectURL(jsonBlob);
+                    window.location = link;
+                    // window.open(link, '_blank');
+                    // window.open(link);
+                },
+                error: function (result) {
+                    alert('error exporting the puzzle');
                 }
             });
         },
@@ -80,6 +102,9 @@ const vue = new Vue ({
             // alert(JSON.stringify(vue.cells));
             vue.getCells();
         },
+        onClickExport: function() {
+            vue.exportCells();
+        },
         onMouseEnter: function(cell) {
             vue.hovering = true;
             vue.hovering_text = cell.id.toString() + ': ' + cell.suspects;
@@ -89,18 +114,22 @@ const vue = new Vue ({
             // vue.hovering_text = ''
         },
         colorFromNumber: function(num) {
-            switch (num) {
-                case 0: return 'white';
-                case 1: return 'crimson';
-                case 2: return 'orange';
-                case 3: return 'yellow';
-                case 4: return 'lightgreen';
-                case 5: return 'green';
-                case 6: return 'lightblue';
-                case 7: return 'royalblue';
-                case 8: return 'pink';
-                case 9: return 'RebeccaPurple';
-                default: return 'black';
+            if (vue.displayColors) {
+                switch (num) {
+                    case 0: return 'silver';
+                    case 1: return 'crimson';
+                    case 2: return 'orange';
+                    case 3: return 'yellow';
+                    case 4: return 'lightgreen';
+                    case 5: return 'green';
+                    case 6: return 'lightblue';
+                    case 7: return 'royalblue';
+                    case 8: return 'hotpink';
+                    case 9: return 'RebeccaPurple';
+                    default: return 'black';
+                }
+            } else {
+                return "transparent";
             }
         },
         labelFromNumber: function(num) {
@@ -109,6 +138,17 @@ const vue = new Vue ({
             } else {
               return num;
             }
+        },
+        displayAsBall: function(cell) { 
+            return (cell.color > 0);
+        }
+    },
+    computed: {
+        displayDigits: function () {
+            return vue.displayMode === 'digits' || vue.displayMode === 'both'
+        },
+        displayColors: function () {
+            return vue.displayMode === 'colors' || vue.displayMode === 'both'
         }
     }
 });

@@ -48,23 +48,17 @@
   justify-content: center;
   background-color: white;
   color: black;
-  border: 1px solid black;
+  border: 1px solid gray;
   border-radius: 5px;
   border-radius: 50%;
   font-size: 180%;
   font-weight: bold;
 }
-.cell.b0 { background-color: white }
-.cell.b1 { background-color: crimson }
-.cell.b2 { background-color: orange }
-.cell.b3 { background-color: yellow }
-.cell.b4 { background-color: lightgreen }
-.cell.b5 { background-color: green }
-.cell.b6 { background-color: lightblue }
-.cell.b7 { background-color: royalblue }
-.cell.b8 { background-color: pink }
-.cell.b9 { background-color: RebeccaPurple }
-
+.cell.ball {
+  box-shadow: inset -25px -15px 40px rgba(0,0,0,.3);
+  background-image: linear-gradient(-45deg, rgba(255,255,220,.3) 0%, transparent 100%);  
+}
+.cell.brush { cursor: pointer }
 .cell.brush.selected { border: 3px solid gold }
 
 .button { 
@@ -77,6 +71,10 @@
   font-size: 100%;
   font-weight: bold;
   font-family: arial;
+}
+.display-config {
+  margin: 20px auto;
+  text-align: center;
 }
 .feedback {
   margin: 10px auto;
