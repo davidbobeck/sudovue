@@ -3,6 +3,8 @@ require "./sudoku_cell"
 
 class SudokuSolver
   attr_accessor :cells, :colors, :h, :v, :b
+
+  CELL_BEING_OBSERVED = 48
   
   #---------------------------------
   def initialize
@@ -102,33 +104,65 @@ class SudokuSolver
       # fuse breaker
       break if loop_count > 100
       
+      #####################
+      #  STRATEGY
+      #####################
+
       cells.each_key do |id|
         cell = cells[id]
         next unless cell.color.nil? 
         
-        #####################
-        #  RULE #1
-        #####################
+        run_loop |= strategy_of_eliminating_knowns(cell, self.h[cell.h])
+        run_loop |= strategy_of_eliminating_knowns(cell, self.v[cell.v])
+        run_loop |= strategy_of_eliminating_knowns(cell, self.b[cell.b])
 
-        run_loop |= rule_of_knowing_8_of_9(cell, self.h[cell.h])
-        run_loop |= rule_of_knowing_8_of_9(cell, self.v[cell.v])
-        run_loop |= rule_of_knowing_8_of_9(cell, self.b[cell.b])
+        # if eight of the colors have already been used,
+        # then it must be the nineth
+        # run_loop |= cell.promote_naked_single
+        result = cell.promote_naked_single
+        if result
+          puts "STRATEGY 0: (NAKED SINGLE) Set #{cell.id} to #{cell.color}"
+          run_loop = true
+        end
+    end
 
-        #####################
-        #  RULE #2
-        #####################
-
-        # process "can't go there, so must go here" cases
-        run_loop |= rule_of_knowing_where_it_cant_go(cell, self.h[cell.h])
-        run_loop |= rule_of_knowing_where_it_cant_go(cell, self.v[cell.v])
-        run_loop |= rule_of_knowing_where_it_cant_go(cell, self.b[cell.b])
+      #####################
+      #  STRATEGY
+      #####################
+      
+      cells.each_key do |id|
+        cell = cells[id]
+        next unless cell.color.nil? 
         
-        #####################
-        #  RULE #3
-        #####################
-        run_loop |= rule_of_binary_colors(cell, self.h[cell.h])
-        run_loop |= rule_of_binary_colors(cell, self.v[cell.v])
-        run_loop |= rule_of_binary_colors(cell, self.b[cell.b])
+        run_loop |= strategy_of_knowing_where_it_cant_go(cell, self.h[cell.h])
+        run_loop |= strategy_of_knowing_where_it_cant_go(cell, self.v[cell.v])
+        run_loop |= strategy_of_knowing_where_it_cant_go(cell, self.b[cell.b])
+      end
+      
+      #####################
+      #  STRATEGY
+      #####################
+
+      cells.each_key do |id|
+        cell = cells[id]
+        next unless cell.color.nil? 
+          
+        run_loop |= strategy_of_hidden_single(cell, self.h[cell.h])
+        run_loop |= strategy_of_hidden_single(cell, self.v[cell.v])
+        run_loop |= strategy_of_hidden_single(cell, self.b[cell.b])
+      end
+
+      #####################
+      #  STRATEGY
+      #####################
+
+      cells.each_key do |id|
+        cell = cells[id]
+        next unless cell.color.nil? 
+        
+        run_loop |= strategy_of_binary_colors(cell, self.h[cell.h])
+        run_loop |= strategy_of_binary_colors(cell, self.v[cell.v])
+        run_loop |= strategy_of_binary_colors(cell, self.b[cell.b])
       end
       
       run_loop = false if success?
@@ -139,46 +173,104 @@ class SudokuSolver
   end
 
   #---------------------------------
-  def rule_of_knowing_8_of_9(cell, zone_ids)
-    zone_ids -= [cell.id]
-    loop_again = false
+  def strategy_of_eliminating_knowns(cell, zone_ids)
+    peer_ids = zone_ids - [cell.id]
+    run_loop = false
 
     # loop thru all colors
     self.colors.each do |color_to_test|
-      zone_ids.each do |id_to_test|
+      peer_ids.each do |id_to_test|
         target = self.cells[id_to_test]
         if target.color == color_to_test
-          # #debugging code
-          # if cell.id == 54
-          #   puts "RULE1: romove #{target.color} from #{cell.possible_colors}"
+          #debugging code
+          # if cell.id == CELL_BEING_OBSERVED
+            # puts "STRATEGY 1: remove #{target.color} from #{cell.possible_colors}"
           # end
 
-          loop_again |= cell.reject_color(target.color)
+          # run_loop |= cell.reject_color(target.color)
+          possible_colors = cell.possible_colors
+          result = cell.reject_color(target.color)
+          if result
+            puts "STRATEGY 1: remove #{target.color} from #{possible_colors}"
+            run_loop = true
+          end
         end
       end
     end
 
-    # if eight of the colors have already been used,
-    # then it must be the nineth
-    run_loop |= cell.promote_remaining_color
-
-    loop_again
+    run_loop
   end
 
   #---------------------------------
-  def rule_of_knowing_where_it_cant_go(cell, zone_ids)
-    zone_ids -= [cell.id]
-    # puts "zone_ids = #{zone_ids}" if cell.id == 76
+  def strategy_of_hidden_single(cell, zone_ids)
+    # zone_ids -= [cell.id]
+    run_loop = false
 
-    zone_possible_colors = get_zone_possible_colors(zone_ids)
+    # optimization: remove the cells that have already been identified
+    open_ids = []
+    known_colors = []
+
+    zone_ids.each do |zone_id|
+      zone_cell = self.cells[zone_id]
+      open_ids << zone_id if zone_cell.color.nil?
+      known_colors << zone_cell.color unless zone_cell.color.nil?
+    end.compact
+
+    # get a list of all colors remaining in the zone 
+    open_possible_colors = get_zone_possible_colors(open_ids)
+    
+    # determine the qty of each color
+    color_counts = open_possible_colors.group_by { |color| color }.map { |color, group| [color, group.size] }.to_h
+
+    # find the colors that only have a count of 1
+    hidden_singles = color_counts.select { |color, count| count == 1 }.map { |color, count| color }
+
+    hidden_singles.each do |hidden_single|
+      next if known_colors.include?(hidden_single)
+      if cell.possible_colors.include?(hidden_single)
+        # run_loop |= cell.set_color(hidden_single)
+        again = cell.set_color(hidden_single)
+        if again
+          # puts "Setting cell #{buddy_id} to color #{hidden_single}"
+          # debugging code
+          # puts cell.id
+          # binding.pry
+          # if cell.id == CELL_BEING_OBSERVED
+            puts "STRATEGY 3: (HIDDEN SINGLE) Setting cell #{cell.id} to color #{hidden_single}"
+          # end
+          # binding.pry
+          run_loop = true
+          break
+        end
+      end
+    end
+    
+    # puts "Found hidden singles:  #{color_counts}" if run_loop 
+    run_loop
+  end
+
+  #---------------------------------
+  def strategy_of_knowing_where_it_cant_go(cell, zone_ids)
+    peer_ids = zone_ids - [cell.id]
+
+    peer_possible_colors = get_zone_possible_colors(peer_ids).uniq
 
     # now test our results
-    xor = (zone_possible_colors + cell.possible_colors) - (zone_possible_colors & cell.possible_colors)
+    xor = (peer_possible_colors + cell.possible_colors) - (peer_possible_colors & cell.possible_colors)
     unique_cell_colors = xor & cell.possible_colors
     # puts "unique_cell_colors = #{unique_cell_colors}" if cell.id == 76
 
     if unique_cell_colors.count == 1
-      return cell.set_color(unique_cell_colors.first)
+      # return cell.set_color(unique_cell_colors.first)
+      unique_color = unique_cell_colors.first
+      result = cell.set_color(unique_color)
+      if result
+        #debugging code
+        # if cell.id == CELL_BEING_OBSERVED
+          puts "STRATEGY 2: Setting cell #{cell.id} to color #{unique_color}"
+        # end
+      end
+      return result
     end
 
     false
@@ -187,51 +279,52 @@ class SudokuSolver
   #---------------------------------
   # If two colors only exist in the same two cells, then all
   # other possible colors can be cleared from those two cells.
-  def rule_of_binary_colors(cell, zone_ids)
-    zone_ids -= [cell.id]
-    loop_again = false
+  def strategy_of_binary_colors(cell, zone_ids)
+    peer_ids = zone_ids - [cell.id]
+    run_loop = false
     
-    zone_ids.each do |buddy_id|
+    peer_ids.each do |buddy_id|
       buddy = self.cells[buddy_id]
       binary_colors = cell.possible_colors & buddy.possible_colors
 
       if binary_colors.count == 2
         # determine if these colors are unique to the zone
-        remainder_zone_ids = zone_ids - [buddy_id]
-        remainder_possible_colors = get_zone_possible_colors(remainder_zone_ids)
+        remainder_peer_ids = peer_ids - [buddy_id]
+        remainder_possible_colors = get_zone_possible_colors(remainder_peer_ids).uniq
+
         if (binary_colors & remainder_possible_colors).count == 0
 
           # the binary colors are unique?
           if cell.possible_colors != binary_colors || buddy.possible_colors != binary_colors
             # #debugging code
-            # if cell.id == 54
-            #   puts "RULE3: changing #{cell.possible_colors} to #{binary_colors}"
+            # if cell.id == CELL_BEING_OBSERVED
+            #   puts "STRATEGY 4: changing #{cell.possible_colors} to #{binary_colors}"
             # end
 
             cell.possible_colors = binary_colors
 
             # #debugging code
-            # if buddy.id == 54
-            #   puts "RULE3: changing #{buddy.possible_colors} to #{binary_colors}"
+            # if buddy.id == CELL_BEING_OBSERVED
+            #   puts "STRATEGY 4: changing #{buddy.possible_colors} to #{binary_colors}"
             # end
 
             buddy.possible_colors = binary_colors
-            loop_again = true
+            run_loop = true
           end
         end
       end
     end
     
-    loop_again
+    run_loop
   end
   
   #---------------------------------
   def get_zone_possible_colors(zone_ids)
-    zone_possible_colors = zone_ids.each_with_object([]) do |target_id, remaining_colors|
-      # puts "target_id = #{target_id}, possible_colors = #{self.cells[target_id].possible_colors}" if cell.id == 76
-      remaining_colors << self.cells[target_id].possible_colors
+    zone_possible_colors = zone_ids.each_with_object([]) do |zone_id, remaining_colors|
+      # puts "zone_id = #{zone_id}, possible_colors = #{self.cells[zone_id].possible_colors}" if cell.id == 76
+      remaining_colors << self.cells[zone_id].possible_colors
       # remaining_colors
-    end.flatten.uniq
+    end.flatten
     # puts "zone_possible_colors = #{zone_possible_colors}" if cell.id == 76
     zone_possible_colors
   end

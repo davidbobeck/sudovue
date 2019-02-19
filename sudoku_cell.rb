@@ -29,7 +29,7 @@ class SudokuCell
   end
 
   #---------------------------------
-  def promote_remaining_color
+  def promote_naked_single
     if self.possible_colors.count == 1
       winning_color = self.possible_colors.first
       if self.color != winning_color
