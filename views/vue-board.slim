@@ -3,7 +3,9 @@
   link rel="stylesheet" href="assets/board.css" type="text/css"
 
 - content_for :scripts do
-  script src="https://cdn.jsdelivr.net/npm/vue"
+  / script src="https://cdn.jsdelivr.net/npm/vue"
+  script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"
+  / script src="https://cdnjs.cloudflare.com/ajax/libs/vue/1.0.11/vue.js"
   script src="assets/vue-board.js"
 
 div#vue-root.dashboard
@@ -21,7 +23,7 @@ div#vue-root.dashboard
     div.zone.zone7
     div.zone.zone8
     div.zone.zone9
-        
+
   div.panel
     div.container.picker
       div.cell.brush id="0" v-on:click="onClickBrush(0)" v-bind:class="{selected: brush_color === 0}" v-bind:style="{ backgroundColor: colorFromNumber(0) }"
@@ -29,7 +31,7 @@ div#vue-root.dashboard
           div.cell.brush.ball id="#{id}" v-on:click="onClickBrush(#{id})" v-bind:class="{selected: brush_color === #{id}}" v-bind:style="{ backgroundColor: colorFromNumber(#{id}) }"
             span v-if="displayDigits" = "#{id}"
 
-    div.button.clear-button v-on:click="onClickClear" = "Clear All" 
+    div.button.clear-button v-on:click="onClickClear" = "Clear All"
     div.button.solve-button v-on:click="onClickSolve" = "Solve"
     div.button.reset-button v-on:click="onClickReset" = "Reset"
     div.button.export-button v-on:click="onClickExport" = "Export"
@@ -43,4 +45,4 @@ div#vue-root.dashboard
     div.feedback v-if="hovering" v-text="hovering_text"
 
   / div.panel.board-panel
-  / div.panel.picker-panel  
+  / div.panel.picker-panel

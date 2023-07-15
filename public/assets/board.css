@@ -8,7 +8,7 @@
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr;
   grid-gap: 10px;
-} 
+}
 /* .panel {
   border: 0px solid blue;
 } */
@@ -26,7 +26,7 @@
   grid-gap: 10px;
   grid-column: 1/2;
   grid-row: 1/2;
-} 
+}
 .container.picker {
   margin: 10px auto;
   width: 330px;
@@ -41,7 +41,7 @@
   grid-gap: 10px;
   /* grid-column: 2/3;
   grid-row: 1/2; */
-} 
+}
 .cell {
   display: flex;
   align-items: center;
@@ -61,16 +61,20 @@
 .cell.brush { cursor: pointer }
 .cell.brush.selected { border: 3px solid gold }
 
-.button { 
+.button {
   margin: 10px auto;
-  padding: 10px; 
-  border: 4px solid gray; 
+  padding: 10px;
+  border: 4px solid gray;
   border-radius: 20px;
   text-align: center;
   width: 200px;
   font-size: 100%;
   font-weight: bold;
   font-family: arial;
+  cursor: pointer;
+}
+.button:hover {
+  background-color: lightgreen;
 }
 .display-config {
   margin: 20px auto;

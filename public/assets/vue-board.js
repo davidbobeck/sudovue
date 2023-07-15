@@ -1,4 +1,4 @@
-Vue.config.devtools = true;
+// Vue.config.devtools = true;
 
 // Vue.component('braggin-thumb', {
 //   // data: function () {
@@ -113,7 +113,8 @@ const vue = new Vue ({
             vue.hovering = false;
             // vue.hovering_text = ''
         },
-        colorFromNumber: function(num) {
+        colorFromNumber: function (num) {
+            if (vue == undefined) { return; }
             if (vue.displayColors) {
                 switch (num) {
                     case 0: return 'silver';
@@ -139,7 +140,7 @@ const vue = new Vue ({
               return num;
             }
         },
-        displayAsBall: function(cell) { 
+        displayAsBall: function(cell) {
             return (cell.color > 0);
         }
     },

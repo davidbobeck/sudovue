@@ -1,3 +1,5 @@
+# row/col => color
+
 PUZZLE = {
   # 11 => Color::DARK_BLUE,
   # 12 => Color::DARK_BLUE,
